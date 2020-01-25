@@ -22,12 +22,21 @@
  *    DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
  *    OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
  *    USE OR OTHER DEALINGS IN THE SOFTWARE.
- * 
+ */
+ 
+/**
  * Description:
- *    This class models a traditional Rubik's cube. The user can select the
- *    reference color, the cube size, and affect turns.
+ *    This class models a traditional cube. The user can select the reference
+ *    color, the cube size, and affect turns.
  * 
- * Bugs and TODO:
+ *    Rubik's cubes are size three (3x3x3). This class currently simulates
+ *    moves for cubes of size two (2x2x2) and three (3x3x3). Larger cubes can
+ *    be rendered, but some cubie combinations cannot be achieved because
+ *    multi-layer moves are unsupported.
+ * 
+ *    Patches are welcomed!
+ * 
+ * Bugs and Features:
  *    https://github.com/chuckwolber/Cube/issues
  * 
  * Glossary of Terms:
@@ -49,9 +58,9 @@
  * Layer Naming:
  *    F = Face
  *    U = Up
- *    L = Left
  *    R = Right
  *    D = Down
+ *    L = Left
  *    B = Back
  *    M = Middle   (Simulated by turning R and L in the same direction.)
  *    E = Equator  (Simulated by turning U and D in the same direction.)
@@ -70,8 +79,7 @@
  *       L F R B
  *       . D . .
  * 
- * Testing and Validation:
- *    Edge coordinates for a 3x3 cube. Edge listing is in clockwise order.
+ *    Edge coordinates for a 3x3x3 cube. Edge listing is in clockwise order.
  *       (F) UF -  2, 3  2, 4  2, 5; RF -  3, 6  4, 6  5, 6; 
  *           DF -  6, 5  6, 4  6, 3; LF -  5, 2  4, 2  3, 2;
  *       (U) FU -  3, 5  3, 4  3, 3; LU -  3, 2  3, 1  3, 0; 
@@ -89,40 +97,64 @@
 #ifndef CUBE_H
 #define CUBE_H
 
+#include <vector>
+
 enum CubieColor : char {
-   BLUE='b',   GREEN='g',  
-   ORANGE='o', RED='r',  
-   WHITE='w',  YELLOW='y', 
-   NOCOLOR=' '
+   BLUE    = 'b', GREEN  = 'g',  
+   ORANGE  = 'o', RED    = 'r',  
+   WHITE   = 'w', YELLOW = 'y', 
+   NOCOLOR = ' '
 };
 
 enum Layer {
    U=1, L=4, F=5, 
    R=6, B=7, D=9,
-   M,   E,   S
+   M,   E,   S,  // Middle layers are currently unsupported.
+   NOLAYER
+};
+
+struct Coordinate {
+   unsigned int row;
+   unsigned int col;
+};
+
+struct Turn {
+   Layer layer;
+   bool clockwise;
 };
 
 class Cube {
    public:
+      Cube();
       Cube(CubieColor referenceColor);
-      Cube(CubieColor referenceColor, int cubeSize);
-      Cube(const Cube &obj);
-      Cube& operator=(const Cube &rhs);
+      Cube(CubieColor referenceColor, unsigned int cubeSize);
+      Cube(const Cube& obj);
+      Cube(Cube&& obj);
       ~Cube();
 
-      void printCube();
-      void printEdgeCoordinates();
-      void printLayer(Layer layer);
+      Cube& operator=(const Cube& rhs);
+      Cube& operator=(Cube&& rhs);
+      bool operator==(const Cube& obj);
+      bool operator!=(const Cube& obj);
+
+      unsigned int getCubeSize();
+
+      /**
+       * The vector returned represents a grid with dimensions
+       * cubeSize*4 x cubeSize*3. Essentially a cube flattened out in a 2D
+       * plane with whitespace filling in the interstitial fields.
+       */
+      std::vector<CubieColor> getCube();
       
+      static char cubieColorToChar(CubieColor cubie);
+      static char layerToChar(Layer layer);
+      static Layer charToLayer(char lChar);
+
       bool isSolved();
-      void turn(Layer layer, bool clockwise);
+      void turn(Turn t);
+      void performAlgorithm(const std::vector<Turn> &algorithm);
 
    private:
-      struct Coordinate {
-         int row;
-         int col;
-      };
-
       struct Square {
          Coordinate ul; // Upper Left
          Coordinate ur; // Upper Right
@@ -140,7 +172,8 @@ class Cube {
       };
 
       void destroyCube();
-      void copyCube(const Cube &from);
+      void copyCube(const Cube& from);
+      void copyCubeAttributes(const Cube& from);
 
       void initializeCube();
 
@@ -160,7 +193,7 @@ class Cube {
       void fourWayRotate(Square square, bool clockwise);
 
       bool isSolved(Coordinate upperLeft, Coordinate upperLeftMax);
-      void getLayerUpperLeft(Coordinate &coord, Layer l);
+      void getLayerUpperLeft(Coordinate& coord, Layer l);
 
       CubieColor fInitColor;
       CubieColor uInitColor;
@@ -169,15 +202,15 @@ class Cube {
       CubieColor rInitColor;
       CubieColor bInitColor;
 
-      int cubeSize;
-      char **cube;
-      Coordinate *edges;
+      unsigned int cubeSize;
+      CubieColor** cube;
+      Coordinate* edges;
 
-      int MIN_SIZE       = 2;
-      int DEFAULT_SIZE   = 3;
-      int LAYERS_PER_COL = 3;
-      int LAYERS_PER_ROW = 4;
-      int NUM_EDGE_TYPES = 24;
+      unsigned int MIN_SIZE       = 2;
+      unsigned int DEFAULT_SIZE   = 3;
+      unsigned int LAYERS_PER_COL = 3;
+      unsigned int LAYERS_PER_ROW = 4;
+      unsigned int NUM_EDGE_TYPES = 24;
 
       /* Cache layer coordinates to speed up turning and solution checking. */
       Coordinate fUpperLeft, fUpperLeftMax;
