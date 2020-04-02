@@ -1,0 +1,155 @@
+#!/usr/bin/env -S python3 -u
+#
+# SPDX-License-Identifier: MIT
+#
+# Copyright (c) 2019 Chuck Wolber
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to
+# deal in the Software without restriction, including without limitation the
+# rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+# sell copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+# 
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+# 
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+# IN THE SOFTWARE.
+#
+
+import argparse
+import json
+import requests
+import subprocess
+import sys
+
+cli_path = "build/cli"
+PORT = 32125
+COUNT = 1000000
+HEARTBEAT = 100000
+all_orders = "".join([str(x) + "," for x in range(1, 1261)])[:-1]
+
+
+def send_result(result_dict):
+    if "HB" in result_dict:
+        print("Heartbeat: " + str(result_dict["HB"]))
+        data = { 'UUID': UUID, "HB": result_dict["HB"] }
+    elif "OR" in result_dict:
+        print("Order Discovery: " + str(result_dict))
+        data = { 'UUID': UUID, "AG": result_dict["AG"], "AN": result_dict["AN"], "OR": result_dict["OR"]}
+
+    r = requests.get("http://" + HOST + ":" + str(PORT), params=data)
+    if r.status_code != 200:
+        print("WARN: Bad reply from server - " + str(r.status_code))
+
+def parse_result(result):
+    result_dict = {}
+    result_list = str(result, 'utf-8').split('\t')
+    for entry in result_list:
+        name, value = entry.split(':')
+        result_dict[name] = value
+    return result_dict
+
+def request_assignment():
+    print("Requesting assignment...")
+    data = { 'UUID': UUID, "SessionRequest": "true" }
+    r = requests.get("http://" + HOST + ":" + str(PORT), params=data)
+    
+    if r.status_code == 400:
+        print("ERROR: The server rejected our request.")
+        return 1
+    elif r.status_code != 200:
+        print("WARN: Bad reply from server - " + str(r.status_code))
+        time.sleep(10)
+        return 0 # Assume the failure is temporary.
+    
+    try:
+        assignment = r.json()
+        print("Assignment received: " + str(assignment))
+    except Exception:
+        print("ERROR: Invalid response from server -  " + r.text)
+        return 1
+
+    if "AG" not in assignment:
+        print("ERROR: Missing assignment starting algorithm!")
+        return 1
+    if "count" not in assignment:
+        print("ERROR: Missing assignment count!")
+        return 1
+    if "HB" not in assignment:
+        print("ERROR: Missing assignment heartbeat interval!")
+        return 1
+    if "OR" not in assignment:
+        print("ERROR: Missing list of missing orders!")
+        return 1
+
+    return run_client(assignment)
+
+def run_client(assignment):
+    cli_cmd = [cli_path,
+               '--algstart', assignment["AG"],
+               '--count', str(assignment["count"]),
+               '--heartbeat', str(assignment["HB"]),
+               '--find-orders', "".join([str(x) + "," for x in assignment["OR"]])[:-1]]
+    if threads > 0:
+        cli_cmd.append("--threads")
+        cli_cmd.append(str(threads))
+    print("Executing Command: " + str(cli_cmd))
+    cli = subprocess.Popen(cli_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+    while True:
+        output = cli.stdout.readline()
+        if cli.poll() is not None:
+            break
+        if output:
+            result_dict = parse_result(output.strip())
+            send_result(result_dict)
+    return cli.poll()
+
+def main():
+    global UUID
+    global HOST
+    global threads
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--uuid", "-u", help="user UUID")
+    parser.add_argument("--server", "-s", help="hostname of the order server")
+    parser.add_argument("--threads", "-t", type=int, help="number of threads to allocate, or one for each CPU if omitted")
+    parser.add_argument("--sessions", "-n", type=int, help="number of sessions to run")
+    args = parser.parse_args()
+
+    if args.uuid:
+        UUID = args.uuid
+    else:
+        parser.print_help()
+        print("ERROR: UUID is a required argument.")
+        return 1
+
+    HOST = "127.0.0.1"
+    if args.server:
+        HOST = args.server
+
+    threads = 0
+    if args.threads:
+        threads = args.threads
+
+    sessions = -1
+    if args.sessions:
+        sessions = args.sessions
+
+    while True:
+        result = request_assignment()
+        if result != 0:
+            break
+        sessions = sessions - 1
+        if sessions == 0:
+            break
+
+if __name__ == '__main__':
+    main()

@@ -1,5 +1,5 @@
 /**
- * MIT License
+ * SPDX-License-Identifier: MIT
  *
  * Copyright (c) 2019 Chuck Wolber
  *
@@ -344,7 +344,7 @@ std::vector<CubieColor> getExpected(CubieColor referenceColor,
 
    std::vector<CubieColor> colorList;
    std::vector<CubieColor> tmp;
-   for (int i = 0; i < cubeSize*4*cubeSize*3; i++)
+   for (unsigned int i = 0; i < cubeSize*4*cubeSize*3; i++)
       tmp.push_back(CubieColor::NOCOLOR);
 
    switch (referenceColor) {
@@ -449,6 +449,6 @@ void setColors(std::vector<CubieColor>& cube,
 void verify_cube(Cube cube, std::vector<CubieColor> expected) {
    std::vector<CubieColor> result = cube.getCube();
    assert(result.size() == expected.size());
-   for (int i = 0; i < result.size(); i++)
+   for (unsigned int i = 0; i < result.size(); i++)
       assert(result.at(i) == expected.at(i));
 }

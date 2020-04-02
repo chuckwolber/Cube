@@ -1,0 +1,11 @@
+{
+   "name": "Cube User",
+   "email": "cube_user@example.org",
+   "user": "28255F79-ADFA-4D24-9091-6293ED050FB4",
+   "role": "USER",
+   "max_active_sessions": 10,
+   "checkpoint_interval": 600,
+   "strikes": 0,
+   "max_strikes": 10
+}
+

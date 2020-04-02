@@ -1,27 +1,25 @@
 /**
- * License:
- *    MIT License
+ * SPDX-License-Identifier: MIT
  *
- *    Copyright (c) 2019 Chuck Wolber
+ * Copyright (c) 2019 Chuck Wolber
  *
- *    Permission is hereby granted, free of charge, to any person obtaining a
- *    copy of this software and associated documentation files (the 
- *    "Software"), to deal in the Software without restriction, including
- *    without limitation the rights to use, copy, modify, merge, publish,
- *    distribute, sublicense, and/or sell copies of the Software, and to permit
- *    persons to whom the Software is furnished to do so, subject to the
- *    following conditions:
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to
+ * deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ * sell copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
  * 
- *    The above copyright notice and this permission notice shall be included
- *    in all copies or substantial portions of the Software.
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
  * 
- *    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- *    OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
- *    MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
- *    NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
- *    DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
- *    OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
- *    USE OR OTHER DEALINGS IN THE SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ * IN THE SOFTWARE.
  */
  
 /**
@@ -98,125 +96,112 @@
 #define CUBE_H
 
 #include <vector>
+#include "Algorithm.h"
 
 enum CubieColor : char {
-   BLUE    = 'b', GREEN  = 'g',  
-   ORANGE  = 'o', RED    = 'r',  
-   WHITE   = 'w', YELLOW = 'y', 
-   NOCOLOR = ' '
-};
-
-enum Layer {
-   U=1, L=4, F=5, 
-   R=6, B=7, D=9,
-   M,   E,   S,  // Middle layers are currently unsupported.
-   NOLAYER
+    BLUE    = 'b', GREEN  = 'g',
+    ORANGE  = 'o', RED    = 'r',
+    WHITE   = 'w', YELLOW = 'y',
+    NOCOLOR = ' '
 };
 
 struct Coordinate {
-   unsigned int row;
-   unsigned int col;
-};
-
-struct Turn {
-   Layer layer;
-   bool clockwise;
+    unsigned int row;
+    unsigned int col;
 };
 
 class Cube {
-   public:
-      Cube();
-      Cube(CubieColor referenceColor);
-      Cube(CubieColor referenceColor, unsigned int cubeSize);
-      Cube(const Cube& obj);
-      Cube(Cube&& obj);
-      ~Cube();
+    public:
+        Cube();
+        Cube(CubieColor referenceColor);
+        Cube(CubieColor referenceColor, unsigned int cubeSize);
+        Cube(const Cube& obj);
+        Cube(Cube&& obj);
+        ~Cube();
 
-      Cube& operator=(const Cube& rhs);
-      Cube& operator=(Cube&& rhs);
-      bool operator==(const Cube& obj);
-      bool operator!=(const Cube& obj);
+        Cube& operator=(const Cube& rhs);
+        Cube& operator=(Cube&& rhs);
+        bool operator==(const Cube& obj);
+        bool operator!=(const Cube& obj);
 
-      unsigned int getCubeSize();
+        unsigned int getCubeSize();
 
-      /**
-       * The vector returned represents a grid with dimensions
-       * cubeSize*4 x cubeSize*3. Essentially a cube flattened out in a 2D
-       * plane with whitespace filling in the interstitial fields.
-       */
-      std::vector<CubieColor> getCube();
+        /**
+        * The vector returned represents a grid with dimensions
+        * cubeSize*4 x cubeSize*3. Essentially a cube flattened out in a 2D
+        * plane with whitespace filling in the interstitial fields.
+        */
+        std::vector<CubieColor> getCube();
       
-      static char cubieColorToChar(CubieColor cubie);
-      static char layerToChar(Layer layer);
-      static Layer charToLayer(char lChar);
+        static char cubieColorToChar(CubieColor cubie);
 
-      bool isSolved();
-      void turn(Turn t);
-      void performAlgorithm(const std::vector<Turn> &algorithm);
+        bool isSolved();
+        void turn(Turn t);
+        void performAlgorithm(const std::vector<Turn> &algorithm);
 
-   private:
-      struct Square {
-         Coordinate ul; // Upper Left
-         Coordinate ur; // Upper Right
-         Coordinate lr; // Lower Right
-         Coordinate ll; // Lower Left
-      };
+    private:
+        struct Square {
+            Coordinate ul; // Upper Left
+            Coordinate ur; // Upper Right
+            Coordinate lr; // Lower Right
+            Coordinate ll; // Lower Left
+        };
 
-      enum Edges {
-         UpFace=0, RightFace, DownFace,  LeftFace,  // F (face)
-         FaceUp,   LeftUp,    BackUp,    RightUp,   // U (up)
-         UpLeft,   FaceLeft,  DownLeft,  BackLeft,  // L (left)
-         UpRight,  BackRight, DownRight, FaceRight, // R (right)
-         FaceDown, RightDown, BackDown,  LeftDown,  // D (down)
-         UpBack,   LeftBack,  DownBack,  RightBack  // B (back)
-      };
+        enum Edges {
+            UpFace=0, RightFace, DownFace,  LeftFace,  // F (face)
+            FaceUp,   LeftUp,    BackUp,    RightUp,   // U (up)
+            UpLeft,   FaceLeft,  DownLeft,  BackLeft,  // L (left)
+            UpRight,  BackRight, DownRight, FaceRight, // R (right)
+            FaceDown, RightDown, BackDown,  LeftDown,  // D (down)
+            UpBack,   LeftBack,  DownBack,  RightBack  // B (back)
+        };
 
-      void destroyCube();
-      void copyCube(const Cube& from);
-      void copyCubeAttributes(const Cube& from);
+        void destroyCube();
+        void copyCube(const Cube& from);
+        void copyCubeAttributes(const Cube& from);
 
-      void initializeCube();
+        void initializeCube();
 
-      void initializeLayers();
-      void initializeLayer(Layer layer, CubieColor color);
+        void initializeLayers();
+        void initializeLayer(Layer layer, CubieColor color);
 
-      void initializeEdges();
-      void initializeFaceEdges();
-      void initializeUpEdges();
-      void initializeLeftEdges();
-      void initializeRightEdges();
-      void initializeDownEdges();
-      void initializeBackEdges();
+        void initializeEdges();
+        void initializeFaceEdges();
+        void initializeUpEdges();
+        void initializeLeftEdges();
+        void initializeRightEdges();
+        void initializeDownEdges();
+        void initializeBackEdges();
 
-      void rotateLayer(Layer layer, bool clockwise);
-      void rotateEdges(Edges start, bool clockwise);
-      void fourWayRotate(Square square, bool clockwise);
+        void rotateLayer(Layer layer, bool clockwise);
+        void rotateEdges(Edges start, bool clockwise);
+        void fourWayRotate(Square square, bool clockwise);
 
-      bool isSolved(Coordinate upperLeft, Coordinate upperLeftMax);
-      void getLayerUpperLeft(Coordinate& coord, Layer l);
+        bool isSolved(Coordinate upperLeft, Coordinate upperLeftMax);
+        void getLayerUpperLeft(Coordinate& coord, Layer l);
 
-      CubieColor fInitColor;
-      CubieColor uInitColor;
-      CubieColor dInitColor;
-      CubieColor lInitColor;
-      CubieColor rInitColor;
-      CubieColor bInitColor;
+        CubieColor fInitColor;
+        CubieColor uInitColor;
+        CubieColor dInitColor;
+        CubieColor lInitColor;
+        CubieColor rInitColor;
+        CubieColor bInitColor;
 
-      unsigned int cubeSize;
-      CubieColor** cube;
-      Coordinate* edges;
+        unsigned int cubeSize;
+        CubieColor** cube;
+        Coordinate* edges;
 
-      unsigned int MIN_SIZE       = 2;
-      unsigned int DEFAULT_SIZE   = 3;
-      unsigned int LAYERS_PER_COL = 3;
-      unsigned int LAYERS_PER_ROW = 4;
-      unsigned int NUM_EDGE_TYPES = 24;
+        unsigned int MIN_SIZE       = 2;
+        unsigned int DEFAULT_SIZE   = 3;
+        unsigned int LAYERS_PER_COL = 3;
+        unsigned int LAYERS_PER_ROW = 4;
+        unsigned int NUM_EDGE_TYPES = 24;
 
-      /* Cache layer coordinates to speed up turning and solution checking. */
-      Coordinate fUpperLeft, fUpperLeftMax;
-      Coordinate uUpperLeft, uUpperLeftMax;
-      Coordinate lUpperLeft, lUpperLeftMax;
-      Coordinate rUpperLeft, rUpperLeftMax;
+        /* Cache layer coordinates to speed up turning and solution checking. */
+        Coordinate fUpperLeft, fUpperLeftMax;
+        Coordinate uUpperLeft, uUpperLeftMax;
+        Coordinate lUpperLeft, lUpperLeftMax;
+        Coordinate rUpperLeft, rUpperLeftMax;
 };
 
 #endif // CUBE_H

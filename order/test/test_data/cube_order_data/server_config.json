@@ -1,0 +1,15 @@
+{
+    "session_size": 429981696,
+    "data_root": "build/cube_order_data",
+    "network": {
+        "tcp_port": 32125,
+        "tls_pub_key": "build/cert.pem",
+        "tls_priv_key": "build/key.nocrypt.pem"
+    },
+    "logging": {
+        "log_file": "build/logs/cube_server.log",
+        "max_log_size": 10000000,
+        "max_logs": 100
+    }
+}
+

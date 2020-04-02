@@ -1,0 +1,12 @@
+{
+    "user": "65C8C46C-2E0E-420E-96AC-38AF503234DD",
+    "session": "3475B123-B9B7-4B47-A9AA-CE952C6B32BB",
+    "dateTimeStarted": "2021-01-01T02:05:03z",
+    "checkpointLast": "2021-01-01T02:07:04z",
+    "dateTimeEnded": "2021-01-01T02:09:05z",
+    "state": "COMPLETE",
+    "nproc": 4,
+    "start_alg": "U F",
+    "session_size": 12
+ }
+

@@ -1,27 +1,25 @@
 /**
- * License:
- *    MIT License
+ * SPDX-License-Identifier: MIT
  *
- *    Copyright (c) 2019 Chuck Wolber
+ * Copyright (c) 2019 Chuck Wolber
  *
- *    Permission is hereby granted, free of charge, to any person obtaining a
- *    copy of this software and associated documentation files (the 
- *    "Software"), to deal in the Software without restriction, including
- *    without limitation the rights to use, copy, modify, merge, publish,
- *    distribute, sublicense, and/or sell copies of the Software, and to permit
- *    persons to whom the Software is furnished to do so, subject to the
- *    following conditions:
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to
+ * deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ * sell copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
  * 
- *    The above copyright notice and this permission notice shall be included
- *    in all copies or substantial portions of the Software.
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
  * 
- *    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- *    OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
- *    MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
- *    NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
- *    DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
- *    OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
- *    USE OR OTHER DEALINGS IN THE SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ * IN THE SOFTWARE.
  */
 
 /**
@@ -31,8 +29,8 @@
  *    This class models an algorithm that can be applied to a Rubik's Cube
  *    (3x3x3). All algorithms are based on the QTM (Quarter Turn Metric) and
  *    are limited to clockwise and anticlockwise versions of the F, U, R, D, L,
- *    B layers. These limitations simplify modeling a Rubik's Cube in computer
- *    memory, without giving up performance.
+ *    and B layers. These limitations simplify modeling a Rubik's Cube in
+ *    computer memory, without giving up performance.
  * 
  *    While humans find a great deal of benefit from using expanded shorthand
  *    notation (https://www.speedsolving.com/wiki/index.php/NxNxN_Notation),
@@ -41,11 +39,46 @@
  * 
  *    Patches are welcomed!
  * 
+ * Algorithm Representation:
+ *    Algorithms are conceptually equivalent to an
+ *    [Odometer](https://en.wikipedia.org/wiki/Odometer). They are read from
+ *    left to right, and incremented from right to left. The Most Significant
+ *    Turn (MST) is the left most digit, and the Least Significant Turn (LST)
+ *    is the right most digit.
+ *
+ *    Where algorithms differ from odometers is in the internal class
+ *    representation, the numerical base used to signify each symbol, and the
+ *    fact that algorithms are [sequences](https://en.wikipedia.org/wiki/Sequence).
+ *
+ *    Internally, the algorithm is stored in a vector with the LST at the
+ *    lowest index value and the MST at the higest index value. This makes it
+ *    quite performant to increment algorithms; index values can be added and
+ *    removed from the end of a Vector in constant time (O(1)).
+ *
+ *    Because there are 12 fundamental turns, each field in an algorithm is
+ *    treated as if it is a Base-12 number.
+ *
+ *    When a odometer rolls over to take up another significant digit (e.g. 99
+ *    to 100, or 999 to 1000, etc.), the new significant digit is the second
+ *    value in the number system being used; e.g. "1" in the decimal system.
+ *    When a sequence rolls over, the new significant digit starts over at the
+ *    lowest value in the number system being used; e.g. "0". This enables an
+ *    arbitrarily long sequence of the same value.
+ *
+ *    An odometer can be thought of as a sequence generator if one ignores the
+ *    most significant (left most) digit.
+ *
  * Bugs and Features:
  *    https://github.com/chuckwolber/Cube/issues
  *
  * Glossary of Terms:
  *    * Layer: See glossary in Cube.h for Layer definition.
+ *    * LST: Least Significant Turn. The turn on the right side of the human
+ *      readable algorithm, and the lowest index value in the Algorithm class'
+ *      internal representation.
+ *    * MST: Most Significant Turn. The turn on the left side of the human
+ *      readable algorithm, and the highest index value in the Algorithm class'
+ *      internal representation.
  *    * QTM (Quarter Turn Metric): One turn of one face ninety degrees. This is
  *      contrasted with the HTM (Half Turn Metric), where half turns make up
  *      two QTM turns.
@@ -58,62 +91,79 @@
 
 #include <string>
 #include <vector>
-#include "Cube.h"
+
+enum Layer {
+    U=1, L=4, F=5,
+    R=6, B=7, D=9,
+    M,   E,   S,  // Middle layers are currently unsupported.
+    NOLAYER
+};
+
+struct Turn {
+    Layer layer;
+    bool clockwise;
+};
+
+static const Turn initialTurn = {Layer::F, true};
 
 class Algorithm {
-   public:
-      Algorithm();
-      Algorithm(const std::vector<Turn> turns);
-      Algorithm(const Algorithm& obj);
+    public:
+        Algorithm();
+        Algorithm(const std::vector<Turn> turns);
+        Algorithm(const Algorithm& obj);
+        Algorithm(const char* algorithm);
 
-      Algorithm& operator= (const Algorithm& rhs);
-      Algorithm& operator++();    // prefix increment
-      Algorithm  operator++(int); // postfix increment
-      Algorithm& operator+=(unsigned int x);
-      bool       operator==(const Algorithm& rhs);
-      bool       operator!=(const Algorithm& rhs);
-      bool       operator< (const Algorithm& rhs);
-      bool       operator<=(const Algorithm& rhs);
-      bool       operator> (const Algorithm& rhs);
-      bool       operator>=(const Algorithm& rhs);
+        Algorithm& operator= (const Algorithm& rhs);
+        Algorithm& operator++();    // prefix increment
+        Algorithm  operator++(int); // postfix increment
+        Algorithm& operator+=(unsigned int x);
+        bool       operator==(const Algorithm& rhs);
+        bool       operator!=(const Algorithm& rhs);
+        bool       operator< (const Algorithm& rhs);
+        bool       operator<=(const Algorithm& rhs);
+        bool       operator> (const Algorithm& rhs);
+        bool       operator>=(const Algorithm& rhs);
 
-      std::vector<Turn> getAlgorithm() const;
+        static bool isValid(const char* algorithm);
+        std::vector<Turn> getAlgorithm() const;
+        std::string getAlgorithmStr() const;
 
-      void clear();
-      void addTurn(Turn turn);
+        void reset();
+        void addTurn(Turn turn);
+        static char layerToChar(Layer layer);
+        static Layer charToLayer(char lChar);
 
-      /**
-       * Returns true if the current algorithm contains at least one inverted
-       * turn. Examples of an inverted turn are F F' or B' B, etc.
-       */
-      bool hasInversion();
+        /**
+         * Returns true if the current algorithm contains at least one inverted
+         * turn. Examples of an inverted turn are F F' or B' B, etc.
+         */
+        bool hasInversion();
 
-      /**
-       * Returns true if the current algorithm contains at least one instance
-       * of three of the same move in a row.
-       */
-      bool hasTriple();
+        /**
+         * Returns true if the current algorithm contains at least one instance
+         * of three of the same move in a row.
+         */
+        bool hasTriple();
 
-      /**
-       * Expects a string of turns delimited by spaces. Valid values in the
-       * string are spaces, layer letters, and single quotes. The parser is
-       * smart enough to extract valid turns from malformed strings.
-       * 
-       * A turn is a layer character (see Cube.h) and an optional single quote.
-       * The optional single quote denotes an anti-clockwise turn. A turn that
-       * does not include the single quote is assumed to be clockwise
-       * .
-       */
-      void setAlgorithm(const char *algorithm);
-      void setAlgorithm(const std::vector<Turn> turns);
+        /**
+         * Expects a string of turns delimited by spaces. Valid values in the
+         * string are spaces, layer letters, and single quotes. The parser is
+         * smart enough to extract valid turns from malformed strings.
+         *
+         * A turn is a layer character (see Cube.h) and an optional single quote.
+         * The optional single quote denotes an anti-clockwise turn. A turn that
+         * does not include the single quote is assumed to be clockwise.
+         */
+        void setAlgorithm(const char* algorithm);
+        void setAlgorithm(const std::vector<Turn> turns);
       
-   private:
-      static const unsigned int ALGORITHM_BASE = 12;
-      std::vector<unsigned int> algorithm;
+    private:
+        static const unsigned int ALGORITHM_BASE = 12;
+        std::vector<unsigned int> algorithm;
 
-      void addToAlgorithm(const unsigned int addend);
-      Turn getTurnForNumber(unsigned int number) const;
-      unsigned int getNumberForTurn(Turn turn) const;
+        void addToAlgorithm(const unsigned int addend);
+        Turn getTurnForNumber(unsigned int number) const;
+        unsigned int getNumberForTurn(Turn turn) const;
 };
 
 #endif // ALGORITHM_H

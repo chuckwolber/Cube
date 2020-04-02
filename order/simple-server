@@ -1,0 +1,276 @@
+#!/usr/bin/env -S python3 -u
+#
+# SPDX-License-Identifier: MIT
+#
+# Copyright (c) 2019 Chuck Wolber
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to
+# deal in the Software without restriction, including without limitation the
+# rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+# sell copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+# 
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+# 
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+# IN THE SOFTWARE.
+#
+
+import http.server
+import json
+import socket
+import socketserver
+import subprocess
+import urllib.parse
+
+cli_path = "build/cli"
+order_data_file = "order_data.json"
+
+PORT = 32125
+COUNT = 429981696
+HEARTBEAT = 2985984
+
+# Data model:
+# { 
+#   'head': "(AG)",
+#   'found': [ {'AG': "", 'OR': num} ],
+#   'missing': [ num ],
+#   'users': [ "UUID" ],
+#   'complete_sessions': num,
+#   'sessions': { "UUID": { 'AG': "AG", 'count': num, 'HB': "AN" } }
+# }
+
+# Request Types:
+# Listen for UUID creation (only on localhost)
+    # Input: UUID, CreateUser=true
+    # Output: HTTP code
+# Listen for session request.
+    # Input: UUID, SessionRequest=true  
+    # Output: HTTP code, AG, count, HB, [OR]
+# Listen for session heartbeat
+    # Input: UUID, HB
+    # Output: HTTP code
+# Listen for order result.
+    # Input: UUID, OR, AG, AN
+    # Output: HTTP code
+
+class OrderSimpleHandler(http.server.SimpleHTTPRequestHandler):
+    def do_GET(self):
+        query_data = {}
+        url_comps = urllib.parse.urlsplit(self.path)
+        for comp in url_comps[3].split('&'):
+            lvalue, rvalue = comp.split('=')
+            query_data[lvalue] = urllib.parse.unquote_plus(rvalue)
+        
+        UUID = ""
+        if "UUID" not in query_data:
+            print("ERROR: Missing UUID")
+            self.client_error()
+            return
+        else:
+            UUID = query_data["UUID"]
+
+        if "CreateUser" in query_data:
+            if self.client_address[0] != "127.0.0.1":
+                print("ERROR: Illegal request!")
+                self.client_error()
+                return
+            elif UUID in order_data["users"]:
+                print("INFO: User already exists " + UUID)
+                self.client_ok()
+                return
+            else:
+                order_data["users"].append(UUID)
+                write_data()
+                print("INFO: User added " + UUID)
+                self.client_ok()
+                return
+
+        if not is_user_valid(UUID):
+            print("ERROR: Invalid user " + UUID)
+            self.client_error()
+            return
+
+        if "SessionRequest" in query_data:
+            if len(order_data["missing"]) == 0:
+                print("INFO: Project complete, no more sessions available!")
+                self.send_response(200)
+                self.send_header("Content-type", "text/plain")
+                self.end_headers()
+                elf.wfile.write(b"Project Complete!")
+                self.connection.close()
+                return
+
+            session = {}
+            if is_session_valid(query_data["UUID"]):
+                session = order_data["sessions"][query_data["UUID"]]
+                print("INFO: Restarting session for " + UUID)
+                session["AG"] = get_next_algorithm(session["AG"], session["HB"])
+                session["count"] = int(session["count"]) - int(session["HB"])
+                session["HB"] = 0
+            else:
+                session = { "AG": order_data["head"], "count": COUNT, "HB": 0 }
+                order_data["head"] = get_next_algorithm(session["AG"], COUNT)
+
+            order_data["sessions"][query_data["UUID"]] = session
+            write_data()
+            client_session = session.copy()
+            client_session["HB"] = HEARTBEAT # Convert HB to heartbeat interval.
+            client_session["OR"] = order_data["missing"]
+            c_ses_str = json.dumps(client_session)
+            self.send_response(200)
+            self.send_header("Content-type", "application/json")
+            self.end_headers()
+            self.wfile.write(c_ses_str.encode())
+            self.connection.close()
+            return
+
+        if not is_session_valid(query_data["UUID"]):
+            print("ERROR: Invalid session request.")
+            self.client_error()
+            return
+    
+        if "HB" in query_data:
+            if int(query_data["HB"]) == -1:
+                del order_data["sessions"][UUID]
+                order_data["complete_sessions"] = order_data["complete_sessions"] + 1
+                print("INFO: Deleted session " + UUID)
+            elif order_data["sessions"][UUID]["HB"] < int(query_data["HB"]):
+                order_data["sessions"][UUID]["HB"] = int(query_data["HB"])
+            write_data()
+            self.client_ok()
+            return
+
+        if "OR" in query_data:
+            if "AG" not in query_data or "AN" not in query_data:
+                print("ERROR: Invalid order result!")
+                self.client_error()
+                return
+            
+            if int(query_data["OR"]) not in order_data["missing"] and not remove_order_if_new_is_less(query_data):
+                print("INFO: Order already found, ignoring.")
+                self.client_ok()
+                return
+
+            order_data["found"].append({'AG': query_data["AG"], 'OR': int(query_data["OR"])})
+            if int(query_data["OR"]) in order_data["missing"]:
+                order_data["missing"].remove(int(query_data["OR"]))
+
+            # An order discovery doubles as a heartbeat. But doing so will
+            # offset the heartbeat multiple if the client restarts the session.
+            # The final -1 heartbeat avoids offset issues that would hang the
+            # session forever.
+            if order_data["sessions"][UUID]["HB"] < int(query_data["AN"]):
+                order_data["sessions"][UUID]["HB"] = int(query_data["AN"])
+
+            write_data()
+            self.client_ok()
+            return
+
+    def client_ok(self):
+        self.send_response(200)
+        self.end_headers()
+        self.connection.close()
+
+    def client_error(self):
+        self.send_response(400)
+        self.end_headers()
+        self.connection.close()
+
+#
+# For the sake of simplicity, and due to the limited number of clients, only one
+# request is allowed at a time. This avoids race conditions, and any need to do
+# any locking. The tradeoff is performance.
+#
+class OrderSimpleServer(http.server.HTTPServer):
+    def server_bind(self):
+        socketserver.TCPServer.server_bind(self)
+        host, port = self.server_address[:2]
+        self.server_name = socket.getfqdn(host)
+        self.server_port = PORT
+        self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)          
+
+def is_session_valid(UUID):
+    if "sessions" not in order_data:
+        return False
+    if UUID not in order_data["sessions"]:
+        return False
+    if "AG" not in order_data["sessions"][UUID]:
+        return False
+    if "count" not in order_data["sessions"][UUID]:
+        return False
+    if "HB" not in order_data["sessions"][UUID]:
+        return False
+    return True
+
+def is_user_valid(UUID):
+    if "users" not in order_data:
+        return False
+    if UUID not in order_data["users"]:
+        return False
+    return True
+
+def get_next_algorithm(AG, count):
+    cli_cmd = [cli_path, "--algstart", AG, '--algmath-add', str(count)]
+    cli = subprocess.Popen(cli_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    cli_stdout, cli_stderr = cli.communicate()
+    return str(cli_stdout.strip(), 'utf-8')
+
+def is_algorithm_less_than(AG1, AG2):
+    cli_cmd = [cli_path, "--algstart", AG1, "--algmath-lt", AG2]
+    cli = subprocess.Popen(cli_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    cli_stdout, cli_stderr = cli.communicate()
+    result = str(cli_stdout.strip(), 'utf-8')
+    if result == "true":
+        return True
+    return False
+
+#
+# We want the lowest posible algorithm associated with each found order.
+#
+def remove_order_if_new_is_less(query_data):
+    for od in order_data["found"]:
+        if int(od["OR"]) == int(query_data["OR"]) and is_algorithm_less_than(query_data["AG"], od["AG"]):
+            order_data["found"].remove(od)
+            return True
+    return False
+
+def read_data():
+    global order_data
+    try:
+        with open(order_data_file, 'r') as odf:
+            order_data = json.load(odf)
+    except Exception:
+        order_data = {}
+    if "head" not in order_data:
+        order_data["head"] = "F"
+    if "found" not in order_data:
+        order_data["found"] = []
+    if "missing" not in order_data:
+        order_data["missing"] = [x for x in range(1, 1261)]
+    if "users" not in order_data:
+        order_data["users"] = []
+    if "complete_sessions" not in order_data:
+        order_data["complete_sessions"] = 0
+    if "sessions" not in order_data:
+        order_data["sessions"] = {}
+
+def write_data():
+    with open(order_data_file, 'w') as odf:
+        json.dump(order_data, odf)
+
+def main():
+    read_data()
+    server = OrderSimpleServer(('', PORT), OrderSimpleHandler)
+    print ("Simple Order server listening to port " + str(PORT))
+    server.serve_forever()
+
+if __name__ == '__main__':
+    main()

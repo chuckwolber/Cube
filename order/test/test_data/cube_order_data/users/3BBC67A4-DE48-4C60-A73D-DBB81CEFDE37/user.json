@@ -1,0 +1,11 @@
+{
+   "name": "Admin User",
+   "email": "admin@example.org",
+   "user": "3BBC67A4-DE48-4C60-A73D-DBB81CEFDE37",
+   "role": "ADMIN",
+   "max_active_sessions": 1,
+   "checkpoint_interval": 600,
+   "strikes": 0,
+   "max_strikes": 10
+}
+

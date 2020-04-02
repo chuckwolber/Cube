@@ -1,0 +1,11 @@
+{
+   "name": "Disabled User",
+   "email": "disabled@example.org",
+   "user": "65C8C46C-2E0E-420E-96AC-38AF503234DD",
+   "role": "DISABLED",
+   "max_active_sessions": 5,
+   "checkpoint_interval": 600,
+   "strikes": 0,
+   "max_strikes": 10
+}
+

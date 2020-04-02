@@ -1,0 +1,11 @@
+{
+    "user": "28255F79-ADFA-4D24-9091-6293ED050FB4",
+    "session": "15A32617-C9FB-4966-95CD-EED45CA5C781",
+    "dateTimeStarted": "2021-01-01T01:02:03z",
+    "checkpointLast": "2021-01-01T01:02:04z",
+    "dateTimeEnded": "2021-01-01T01:02:05z",
+    "state": "COMPLETE",
+    "nproc": 4,
+    "start_alg": "F",
+    "session_size": 12
+ }

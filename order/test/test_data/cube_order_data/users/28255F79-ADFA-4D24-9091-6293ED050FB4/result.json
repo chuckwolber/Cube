@@ -1,0 +1,34 @@
+{
+	"user": "28255F79-ADFA-4D24-9091-6293ED050FB4",
+	"results": [{
+			"algorithm": "F",
+			"order": 4,
+			"session": "15A32617-C9FB-4966-95CD-EED45CA5C781"
+		},
+		{
+			"algorithm": "F F",
+			"order": 2,
+			"session": "7F182C55-D9AF-479B-921A-4C18C5FC5EC1/"
+		},
+		{
+			"algorithm": "F F'",
+			"order": 1,
+			"session": "7F182C55-D9AF-479B-921A-4C18C5FC5EC1/"
+		},
+		{
+			"algorithm": "F U",
+			"order": 105,
+			"session": "7F182C55-D9AF-479B-921A-4C18C5FC5EC1/"
+		},
+		{
+			"algorithm": "F U'",
+			"order": 63,
+			"session": "7F182C55-D9AF-479B-921A-4C18C5FC5EC1/"
+		},
+		{
+			"algorithm": "B",
+			"order": 4,
+			"session": "7F182C55-D9AF-479B-921A-4C18C5FC5EC1/"
+		}
+	]
+}
