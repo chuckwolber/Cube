@@ -1,5 +1,5 @@
 /**
- * MIT License
+ * SPDX-License-Identifier: MIT
  *
  * Copyright (c) 2019 Chuck Wolber
  *
@@ -22,199 +22,233 @@
  * IN THE SOFTWARE.
  */
 
-/**
- * Internal Representation:
- *    The internal representation of an algorithm is LSB on the left and MSB on
- *    the right. This makes rollovers faster because it is easeier to add a new
- *    place to the right side of the internal representation than it is to add
- *    a new place on the left, which involves shifting everything to the right.
- * 
- *    Retrieving an algorithm (getAlgorithm()) inverts the ordering so the
- *    human sees what they expect - MSB on the left and LSB on the right.
- */
-
 #include "Algorithm.h"
 
-Algorithm::Algorithm() {}
-
-Algorithm::Algorithm(const std::vector<Turn> turns) {
-   setAlgorithm(turns);
+Algorithm::Algorithm() {
+    addTurn(initialTurn);
 }
 
-#include <iostream>
+Algorithm::Algorithm(const std::vector<Turn> turns) {
+    setAlgorithm(turns);
+}
+
 Algorithm::Algorithm(const Algorithm& obj) {
-   algorithm = obj.algorithm;
+    algorithm = obj.algorithm;
+}
+
+Algorithm::Algorithm(const char* algorithm) {
+    setAlgorithm(algorithm);
 }
 
 Algorithm& Algorithm::operator=(const Algorithm& rhs) {
-   if (&rhs != this)
-      algorithm = rhs.algorithm;
-   return *this;
+    if (&rhs != this)
+        algorithm = rhs.algorithm;
+    return *this;
 }
 
 Algorithm& Algorithm::operator++() {
-   addToAlgorithm(1);
-   return *this;
+    addToAlgorithm(1);
+    return *this;
 }
 
 Algorithm Algorithm::operator++(int) {
-   Algorithm temp(*this);
-   ++(*this);
-   return temp;
+    Algorithm temp(*this);
+    ++(*this);
+    return temp;
 }
 
 Algorithm& Algorithm::operator+=(unsigned int x) {
-   addToAlgorithm(x);
-   return *this;
+    addToAlgorithm(x);
+    return *this;
 }
 
 bool Algorithm::operator==(const Algorithm& rhs) {
-   return algorithm == rhs.algorithm;
+    return algorithm == rhs.algorithm;
 }
 
 bool Algorithm::operator!=(const Algorithm& rhs) {
-   return algorithm != rhs.algorithm;
+    return algorithm != rhs.algorithm;
 }
 
 bool Algorithm::operator<(const Algorithm& rhs) {
-   if (algorithm.size() > rhs.algorithm.size())
-      return false;
-   if (algorithm.size() < rhs.algorithm.size())
-      return true;
-   for (unsigned int i = algorithm.size() - 1; i >= 0; i--) {
-      if (algorithm.at(i) == rhs.algorithm.at(i))
-         continue;
-      if (algorithm.at(i) < rhs.algorithm.at(i))
-         return true;
-      return false;
-   }
-   return false;
+    if (algorithm.size() > rhs.algorithm.size())
+        return false;
+    if (algorithm.size() < rhs.algorithm.size())
+        return true;
+    for (ssize_t i = (ssize_t)algorithm.size() - 1; i >= 0; i--) {
+        if (algorithm.at((size_t)i) == rhs.algorithm.at((size_t)i))
+            continue;
+        if (algorithm.at((size_t)i) < rhs.algorithm.at((size_t)i))
+            return true;
+        return false;
+    }
+    return false;
 }
 
 bool Algorithm::operator<=(const Algorithm& rhs) {
-   if (*this == rhs || *this < rhs)
-      return true;
-   return false;
+    if (*this == rhs || *this < rhs)
+        return true;
+    return false;
 }
 
 bool Algorithm::operator>(const Algorithm& rhs) {
-   return !(*this <= rhs);
+    return !(*this <= rhs);
 }
 
 bool Algorithm::operator>=(const Algorithm& rhs) {
-   if (*this > rhs || *this == rhs)
-      return true;
-   return false;
+    if (*this > rhs || *this == rhs)
+        return true;
+    return false;
+}
+
+bool Algorithm::isValid(const char* algorithm) {
+    if (algorithm == nullptr)
+        return false;
+    
+    bool inTurn = false;
+    Layer layer;
+
+    while (*algorithm != '\0') {
+        layer = Algorithm::charToLayer(*algorithm);
+        if (inTurn) {
+            if (*algorithm != ' ' && *algorithm != '\'')
+                return false;
+            if (*algorithm == ' ')
+                inTurn = false;
+        } else if (layer != Layer::NOLAYER) {
+            inTurn = true;
+        } else {
+            return false;
+        }
+        algorithm++;
+    }
+    return true;
 }
 
 void Algorithm::setAlgorithm(const std::vector<Turn> turns) {
-   clear();
-   for (Turn turn : turns)
-      addTurn(turn);
+    algorithm.clear();
+    for (Turn turn : turns)
+        addTurn(turn);
 }
 
 void Algorithm::setAlgorithm(const char *algorithm) {
-   clear();
-   if (algorithm == nullptr)
-      return;
-   
-   Turn *turn = nullptr;
-   Layer layer;
+    if (!isValid(algorithm))
+        return;
+    
+    this->algorithm.clear();
+    Turn *turn = nullptr;
+    Layer layer;
 
-   while (*algorithm != '\0') {
-      layer = Cube::charToLayer(*algorithm);
-      if (turn != nullptr) {
-         if (*algorithm == ' ') {
-            addTurn(*turn);
-            turn = nullptr;
-         } else if (*algorithm == '\'') {
-            turn->clockwise = false;
-            addTurn(*turn);
-            turn = nullptr;
-         }
-      } else if (layer != Layer::NOLAYER) {
-         turn = new Turn;
-         turn->clockwise = true;
-         turn->layer = layer;
-      }
-      algorithm++;
-   }
+    while (*algorithm != '\0') {
+        layer = Algorithm::charToLayer(*algorithm);
+        if (turn != nullptr) {
+            if (*algorithm == ' ') {
+                addTurn(*turn);
+                turn = nullptr;
+            } else if (*algorithm == '\'') {
+                turn->clockwise = false;
+                addTurn(*turn);
+                turn = nullptr;
+            }
+        } else if (layer != Layer::NOLAYER) {
+            turn = new Turn;
+            turn->clockwise = true;
+            turn->layer = layer;
+        }
+        algorithm++;
+    }
    
-   if (turn != nullptr)
-      addTurn(*turn);
+    if (turn != nullptr)
+        addTurn(*turn);
 }
 
-void Algorithm::clear() {
-   algorithm.clear();
+void Algorithm::reset() {
+    algorithm.clear();
+    addTurn(initialTurn);
 }
 
 void Algorithm::addTurn(Turn turn) {
-   std::vector<unsigned int>::iterator it = algorithm.begin();
-   algorithm.insert(it, getNumberForTurn(turn));
+    std::vector<unsigned int>::iterator it = algorithm.begin();
+    algorithm.insert(it, getNumberForTurn(turn));
 }
 
 void Algorithm::addToAlgorithm(unsigned int addend) {
-   unsigned int index = 0;
-   unsigned int fieldCarry = 0;
+    unsigned int index = 0;
+    unsigned int fieldCarry = 0;
 
-   unsigned int addendModulus;
-   unsigned int fieldSum;
-   unsigned int fieldValue;
+    unsigned int addendModulus;
+    unsigned int fieldSum;
+    unsigned int fieldValue;
    
-   while (addend > 0 || fieldCarry > 0) {
-      if (algorithm.size() < index + 1) {
-         algorithm.push_back(0);
-         if (addend != 0)
-            addend--;
-         else if (fieldCarry != 0)
-            fieldCarry--;
-      }
+    while (addend > 0 || fieldCarry > 0) {
+        if (algorithm.size() < index + 1) {
+            algorithm.push_back(0);
+            if (addend != 0)
+                addend--;
+            else if (fieldCarry != 0)
+                fieldCarry--;
+        }
 
-      addendModulus = addend % ALGORITHM_BASE;
-      addend = (addend - addendModulus) / ALGORITHM_BASE;
+        addendModulus = addend % ALGORITHM_BASE;
+        addend = (addend - addendModulus) / ALGORITHM_BASE;
 
-      fieldSum = algorithm.at(index) + addendModulus + fieldCarry;
-      fieldValue = fieldSum % ALGORITHM_BASE;
-      fieldCarry = (fieldSum - fieldValue) / ALGORITHM_BASE;
+        fieldSum = algorithm.at(index) + addendModulus + fieldCarry;
+        fieldValue = fieldSum % ALGORITHM_BASE;
+        fieldCarry = (fieldSum - fieldValue) / ALGORITHM_BASE;
 
-      algorithm.at(index++) = fieldValue;
-   }
+        algorithm.at(index++) = fieldValue;
+    }
+}
+
+std::string Algorithm::getAlgorithmStr() const {
+    std::string result = "";
+    for (unsigned long i=algorithm.size(); i>0; i--) {
+        Turn t = getTurnForNumber(algorithm[i-1]);
+        result += layerToChar(t.layer);
+
+        if (!t.clockwise)
+            result += "\'";
+        if (i > 1)
+            result += " ";
+    }
+
+    return result;
 }
 
 std::vector<Turn> Algorithm::getAlgorithm() const {
-   std::vector<Turn> a;
-   for (unsigned int i=algorithm.size(); i>0; i--)
-      a.push_back(getTurnForNumber(algorithm[i-1]));
-   return a;
+    std::vector<Turn> a;
+    for (unsigned long i=algorithm.size(); i>0; i--)
+        a.push_back(getTurnForNumber(algorithm[i-1]));
+    return a;
 }
 
 bool Algorithm::hasInversion() {
-   if (algorithm.size() == 1)
-      return false;
+    if (algorithm.size() == 1)
+        return false;
 
-   for (unsigned int i=0; i<(algorithm.size() - 1); i++) {
-      if (algorithm.at(i) % 2 == 0 &&
-         algorithm.at(i) == algorithm.at(i+1) - 1)
-         return true;
+    for (unsigned int i=0; i<(algorithm.size() - 1); i++) {
+        if (algorithm.at(i) % 2 == 0 &&
+            algorithm.at(i) == algorithm.at(i+1) - 1)
+            return true;
 
-      if (algorithm.at(i) % 2 == 1 &&
-         algorithm.at(i) == algorithm.at(i+1) + 1)
-         return true;
-   }
-   return false;
+        if (algorithm.at(i) % 2 == 1 &&
+            algorithm.at(i) == algorithm.at(i+1) + 1)
+            return true;
+    }
+    return false;
 }
 
 bool Algorithm::hasTriple() {
-   if (algorithm.size() < 3)
-      return false;
+    if (algorithm.size() < 3)
+        return false;
 
-   for (unsigned int i=0; i<=(algorithm.size() - 3); i++) {
-      if (algorithm.at(i)   == algorithm.at(i+1) &&
-          algorithm.at(i+1) == algorithm.at(i+2))
-          return true;
-   }
+    for (unsigned int i=0; i<=(algorithm.size() - 3); i++) {
+        if (algorithm.at(i)   == algorithm.at(i+1) &&
+            algorithm.at(i+1) == algorithm.at(i+2))
+            return true;
+    }
 
-   return false;
+    return false;
 }
 
 unsigned int Algorithm::getNumberForTurn(Turn turn) const {
@@ -290,5 +324,73 @@ Turn Algorithm::getTurnForNumber(unsigned int number) const {
       default:
          return {Layer::F, true};
          break;
+   }
+}
+
+char Algorithm::layerToChar(Layer layer) {
+   switch (layer) {
+      case Layer::F:
+         return 'F';
+         break;
+      case Layer::U:
+         return 'U';
+         break;
+      case Layer::R:
+         return 'R';
+         break;
+      case Layer::D:
+         return 'D';
+         break;
+      case Layer::L:
+         return 'L';
+         break;
+      case Layer::B:
+         return 'B';
+         break;
+      case Layer::M:
+         return 'M';
+         break;
+      case Layer::E:
+         return 'E';
+         break;
+      case Layer::S:
+         return 'S';
+         break;
+      default: // Keep the GNU happy.
+         return 'X';
+   }
+}
+
+Layer Algorithm::charToLayer(char lChar) {
+   switch (lChar) {
+      case 'F':
+         return Layer::F;
+         break;
+      case 'U':
+         return Layer::U;
+         break;
+      case 'R':
+         return Layer::R;
+         break;
+      case 'D':
+         return Layer::D;
+         break;
+      case 'L':
+         return Layer::L;
+         break;
+      case 'B':
+         return Layer::B;
+         break;
+      case 'M':
+         return Layer::M;
+         break;
+      case 'E':
+         return Layer::E;
+         break;
+      case 'S':
+         return Layer::S;
+         break;
+      default:
+         return Layer::NOLAYER;
    }
 }
