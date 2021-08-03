@@ -1,34 +1,32 @@
 /**
- * License:
- *    MIT License
+ * SPDX-License-Identifier: MIT
  *
- *    Copyright (c) 2019 Chuck Wolber
+ * Copyright (c) 2019 Chuck Wolber
  *
- *    Permission is hereby granted, free of charge, to any person obtaining a
- *    copy of this software and associated documentation files (the 
- *    "Software"), to deal in the Software without restriction, including
- *    without limitation the rights to use, copy, modify, merge, publish,
- *    distribute, sublicense, and/or sell copies of the Software, and to permit
- *    persons to whom the Software is furnished to do so, subject to the
- *    following conditions:
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to
+ * deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ * sell copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
  * 
- *    The above copyright notice and this permission notice shall be included
- *    in all copies or substantial portions of the Software.
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
  * 
- *    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- *    OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
- *    MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
- *    NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
- *    DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
- *    OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
- *    USE OR OTHER DEALINGS IN THE SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ * IN THE SOFTWARE.
  */
 
 /**
  * Description:
- *    Aggregates cubeorder output into individual files representing each
- *    numerical order. Each file combines all of the known combinations that
- *    match that order.
+ *    Aggregates cli output into individual files representing each numerical
+ *    order. Each file combines all of the known combinations that match that
+ *    order.
  * 
  *    File format is:
  *       TN:1    AN:6    OR:4    AG:F' F  F'
@@ -38,10 +36,17 @@
  *    OR - Order
  *    AG - Algorithm
  * 
- *    Note: For large scale processing, JSON would make more sense. The intent
- *    of cubeorder was to behave like a "calculator" utility for determining
- *    the order of a set of algorithms. For that reason, human reability was
- *    favored over large scale processing capability.
+ *    Note 1: For large scale processing, JSON would make more sense. The
+ *    intent of the cli was to behave like a "calculator" utility for
+ *    determining the order of a set of algorithms. For that reason, human
+ *    readability was favored over large scale processing capability.
+ * 
+ *    Note 2: Algorithm Number is not considered an absolute value, as that
+ *    would require numbers far larger than architecture primitives allow. 
+ *    Algorithm Number is relative to the thread number in a particular data
+ *    file. Think of it as a shorthand for determining whether an algorithm is
+ *    greater or less than another algorithm, without needing to bother with
+ *    remembering which turn comes before another.
  */
 
 #include <getopt.h>
