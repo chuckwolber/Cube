@@ -1,58 +1,37 @@
-VERSION=0.0.1
+VERSION := 0.0.2
 
-CC = g++
-CXXFLAGS = -Wall -Werror -pedantic -std=c++11
+CXXOPTI :=
+CXXFLAGS := -g -Wall -Werror -Wextra -Wconversion -Wuninitialized -pedantic -std=c++11
+CXX := g++
 
-BUILD_DIR = build
-CLASSES_CUBE = test_cube.cpp Algorithm.cpp Cube.cpp
-CLASSES_ALGO = test_algorithm.cpp Algorithm.cpp Cube.cpp
-OBJS_CUBE = $(patsubst %.cpp,$(BUILD_DIR)/%.o,$(CLASSES_CUBE))
-OBJS_ALGO = $(patsubst %.cpp,$(BUILD_DIR)/%.o,$(CLASSES_ALGO))
+BUILD_DIR := build
 
-.PHONY: all clean \
-        test_cube test_cube-debug $(patsubst %.cpp,%.o,$(CLASSES_CUBE)) \
-        test_algorithm test_algorithm-debug $(patsubst %.cpp,%.o,$(CLASSES_ALGO))
+CUBE = Algorithm.cpp Cube.cpp
+CUBEOBJ = $(patsubst %.cpp,$(BUILD_DIR)/%.o,$(CUBE))
+ALLEXEC = test_cube test_algorithm
 
-all: builddir test_cube test_algorithm
+.PHONY: all clean $(ALLEXEC)
+
+all: test
+
+test: $(ALLEXEC)
+	$(BUILD_DIR)/test_algorithm
+	$(BUILD_DIR)/test_cube
 
 builddir: $(BUILD_DIR)
 $(BUILD_DIR):
 	mkdir -p $(BUILD_DIR)
 
 test_algorithm: $(BUILD_DIR)/test_algorithm
-$(BUILD_DIR)/test_algorithm: $(OBJS_ALGO)
-	$(CC) $(CXXFLAGS) $(OBJS_ALGO) -o $@
-	$(BUILD_DIR)/test_algorithm
+$(BUILD_DIR)/test_algorithm: test_algorithm.cpp $(CUBEOBJ) | builddir
+	$(CXX) $(CXXFLAGS) $(CXXOPTI) $(CUBEOBJ) $< -o $@
 
 test_cube: $(BUILD_DIR)/test_cube
-$(BUILD_DIR)/test_cube: $(OBJS_CUBE)
-	$(CC) $(CXXFLAGS) $(OBJS_CUBE) -o $@
-	$(BUILD_DIR)/test_cube
+$(BUILD_DIR)/test_cube: test_cube.cpp $(CUBEOBJ) | builddir
+	$(CXX) $(CXXFLAGS) $(CXXOPTI) $(CUBEOBJ) $< -o $@
 
-test_algorithm-debug: $(BUILD_DIR)/test_algorithm-debug
-$(BUILD_DIR)/test_algorithm-debug: $(OBJS_ALGO)
-	$(CC) $(CXXFLAGS) $(OBJS_ALGO) -g -o $@
-
-test_cube-debug: $(BUILD_DIR)/test_cube-debug
-$(BUILD_DIR)/test_cube-debug: $(OBJS_CUBE)
-	$(CC) $(CXXFLAGS) $(OBJS_CUBE) -g -o $@
-
-test_algorithm.o: $(BUILD_DIR)/test_algorithm.o
-$(BUILD_DIR)/test_algorithm.o: test_algorithm.cpp
-	$(CC) $(CXXFLAGS) -c $< -o $@
-
-test_cube.o: $(BUILD_DIR)/test_cube.o
-$(BUILD_DIR)/test_cube.o: test_cube.cpp
-	$(CC) $(CXXFLAGS) -c $< -o $@
-
-Algorithm.o: $(BUILD_DIR)/Algorithm.o
-$(BUILD_DIR)/Algorithm.o: ../Algorithm.cpp
-	$(CC) $(CXXFLAGS) -c $< -o $@
-
-Cube.o: $(BUILD_DIR)/Cube.o
-$(BUILD_DIR)/Cube.o: ../Cube.cpp
-	$(CC) $(CXXFLAGS) -c $< -o $@
+$(BUILD_DIR)/%.o: ../%.cpp | builddir
+	$(CXX) $(CXXFLAGS) $(CXXOPTI) -c $< -o $@
 
 clean:
 	rm -rf $(BUILD_DIR)
-
