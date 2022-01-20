@@ -33,6 +33,7 @@
 
 /**
  * Face Order: U L F R B D
+ *      U   U   U   U   U   U   U   U   L   L   L   L   L   L   L   L   F   F   F   F   F   F   F   F   R   R   R   R   R   R   R   R   B   B   B   B   B   B   B   B   D   D   D   D   D   D   D   D  
  * S	1	2	3	4	5	6	7	8	9	10	11	12	13	14	15	16	17	18	19	20	21	22	23	24	25	26	27	28	29	30	31	32	33	34	35	36	37	38	39	40	41	42	43	44	45	46	47	48
  * F	1	2	3	4	5	16	13	11	9	10	41	12	42	14	15	43	22	20	17	23	18	24	21	19	6	26	27	7	29	8	31	32	33	34	35	36	37	38	39	40	30	28	25	44	45	46	47	48
  * F'	1	2	3	4	5	25	28	30	9	10	8	12	7	14	15	6	19	21	24	18	23	17	20	22	43	26	27	42	29	41	31	32	33	34	35	36	37	38	39	40	11	13	16	44	45	46	47	48
@@ -58,10 +59,12 @@ static struct option longopts[] = {
     {NULL,           0,                 NULL,   0}
 };
 
-char* prog_name;
 static const int ORDER_MAX = ORDER_MAX_CONST;
+static const int DEFAULT_ALG_MAX = 1000000;
+
+char* prog_name;
 int found_orders[ORDER_MAX_CONST];
-unsigned int algorithm_count_max;
+unsigned int algorithm_count;
 unsigned int heartbeat;
 unsigned int find_specific_orders = FALSE;
 unsigned int print_config = FALSE;
@@ -87,6 +90,7 @@ void PrintConfig() {
             if (!found_orders[i])
                 printf("\tLooking for: %d\n", i);
     }
+    printf("Algorithm Count: %d\n", algorithm_count);
 }
 
 void SetFindOrders(char* order_list) {
@@ -119,11 +123,25 @@ void SetFindOrders(char* order_list) {
         found_orders[curr_order] = FALSE;
 }
 
+// __global__
+void calculate_orders() {
+    char cube[48] = {'U','U','U','U','U','U','U','U',
+                     'L','L','L','L','L','L','L','L',
+                     'F','F','F','F','F','F','F','F',
+                     'R','R','R','R','R','R','R','R',
+                     'B','B','B','B','B','B','B','B',
+                     'D','D','D','D','D','D','D','D'};
+
+}
+
 int main(int argc, char *argv[]) {
     int ch;
     char* algorithm_start;
 
+    algorithm_count = DEFAULT_ALG_MAX;
+    heartbeat = 0;
     prog_name = argv[0];
+
     opterr = 0;
     while((ch = getopt_long(argc, argv, "a:c:b:f:ph", longopts, NULL)) != -1) {
         switch(ch) {
@@ -131,7 +149,7 @@ int main(int argc, char *argv[]) {
                 algorithm_start = optarg;
                 break;
             case 'c':
-                algorithm_count_max = (unsigned int)(strtol(optarg, NULL, 10));
+                algorithm_count = (unsigned int)(strtol(optarg, NULL, 10));
                 break;
             case 'b':
                 heartbeat = (unsigned int)(strtol(optarg, NULL, 10));
@@ -154,3 +172,4 @@ int main(int argc, char *argv[]) {
     if (print_config)
         PrintConfig();
 }
+
