@@ -1,7 +1,7 @@
 /**
  * SPDX-License-Identifier: MIT
  *
- * Copyright (c) 2019 Chuck Wolber
+ * Copyright (c) 2022 Chuck Wolber
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -40,11 +40,11 @@
  *    Patches are welcomed!
  * 
  * Algorithm Representation:
- *    Algorithms are conceptually equivalent to an
- *    [Odometer](https://en.wikipedia.org/wiki/Odometer). They are read from
- *    left to right, and incremented from right to left. The Most Significant
- *    Turn (MST) is the left most digit, and the Least Significant Turn (LST)
- *    is the right most digit.
+ *    Algorithms are lexicographically ordered, which is conceptually equivalent
+ *    to an [Odometer](https://en.wikipedia.org/wiki/Odometer). They are read
+ *    from left to right, and incremented from right to left. The Most
+ *    Significant Turn (MST) is the left most digit, and the Least Significant
+ *    Turn (LST) is the right most digit.
  *
  *    Where algorithms differ from odometers is in the internal class
  *    representation, the numerical base used to signify each symbol, and the
@@ -67,9 +67,6 @@
  *
  *    An odometer can be thought of as a sequence generator if one ignores the
  *    most significant (left most) digit.
- *
- * Bugs and Features:
- *    https://github.com/chuckwolber/Cube/issues
  *
  * Glossary of Terms:
  *    * Layer: See glossary in Cube.h for Layer definition.
@@ -109,6 +106,7 @@ static const Turn initialTurn = {Layer::F, true};
 class Algorithm {
     public:
         Algorithm();
+        Algorithm(const unsigned long long int algNum);
         Algorithm(const std::vector<Turn> turns);
         Algorithm(const Algorithm& obj);
         Algorithm(const char* algorithm);
@@ -116,7 +114,7 @@ class Algorithm {
         Algorithm& operator= (const Algorithm& rhs);
         Algorithm& operator++();    // prefix increment
         Algorithm  operator++(int); // postfix increment
-        Algorithm& operator+=(unsigned int x);
+        Algorithm& operator+=(unsigned long long int x);
         bool       operator==(const Algorithm& rhs);
         bool       operator!=(const Algorithm& rhs);
         bool       operator< (const Algorithm& rhs);
@@ -125,8 +123,44 @@ class Algorithm {
         bool       operator>=(const Algorithm& rhs);
 
         static bool isValid(const char* algorithm);
+
+        /**
+         * @brief Get the Algorithm in a human readable (MST to LST) form. This
+         * is reverse of the internal representation (LST to MST).
+         * 
+         * @return std::vector<Turn> 
+         */
         std::vector<Turn> getAlgorithm() const;
         std::string getAlgorithmStr() const;
+
+        /**
+         * @brief Get the Algorithm Number. Algorithms are zero indexed.
+         * 
+         * @return unsigned long long int 
+         */
+        unsigned long long int getAlgorithmNumber() const;
+
+        /**
+         * @brief Set the Algorithm Number object starting from zero. This
+         * call resets the algorithm and sets it explicity.
+         * 
+         * @param algNum 
+         */
+        void setAlgorithmNumber(unsigned long long int algNum);
+
+        void setAlgorithmOrder(unsigned int algorithmOrder);
+        unsigned int getAlgorithmOrder() const;
+
+        /**
+         * @brief Does the same thing as setAlogorithmNumber, but is faster if
+         * the difference between the current algorithm number and the argument
+         * algorithm number is small. Since algorithm subtraction is not (yet)
+         * supported, this has the same affect as calling setAlgorithmNumber if
+         * the difference is negative.
+         * 
+         * @param algNum The algorithm number to update to.
+         */
+        void incrementAlgorithmToAlgNum(unsigned long long int algNum);
 
         void reset();
         void addTurn(Turn turn);
@@ -134,16 +168,25 @@ class Algorithm {
         static Layer charToLayer(char lChar);
 
         /**
+         * @brief Performs all redundancy checks.
+         * 
+         * @return true If this is a redundant algorith.
+         * @return false If this is not a redundant algorithm.
+         */
+        bool isRedundant();
+
+        /**
          * Returns true if the current algorithm contains at least one inverted
          * turn. Examples of an inverted turn are F F' or B' B, etc.
          */
         bool hasInversion();
-
+        bool hasHiddenInversion();
         /**
          * Returns true if the current algorithm contains at least one instance
          * of three of the same move in a row.
          */
         bool hasTriple();
+        bool hasHiddenTriple();
 
         /**
          * Expects a string of turns delimited by spaces. Valid values in the
@@ -159,11 +202,16 @@ class Algorithm {
       
     private:
         static const unsigned int ALGORITHM_BASE = 12;
-        std::vector<unsigned int> algorithm;
 
-        void addToAlgorithm(const unsigned int addend);
-        Turn getTurnForNumber(unsigned int number) const;
+        /* @brief Internal represetation is LST at index 0. */
+        std::vector<unsigned long long int> algorithm;
+        unsigned int algorithmOrder = 0;
+        unsigned long long int algorithmNumber = 0;
+
+        void addToAlgorithm(const unsigned long long int addend);
+        Turn getTurnForNumber(unsigned long long int number) const;
         unsigned int getNumberForTurn(Turn turn) const;
+        unsigned int getOppositeFace(unsigned long long int face);
 };
 
 #endif // ALGORITHM_H

@@ -79,6 +79,17 @@
     "variant": "cpp",
     "*.dat": "cpp",
     "*.ipp": "cpp",
-    "filesystem": "cpp"
+    "filesystem": "cpp",
+    "__bits": "cpp",
+    "clocale": "cpp",
+    "compare": "cpp",
+    "concepts": "cpp",
+    "future": "cpp",
+    "numbers": "cpp",
+    "semaphore": "cpp",
+    "*.tcc": "cpp",
+    "memory_resource": "cpp",
+    "stop_token": "cpp",
+    "cinttypes": "cpp"
 }
 }

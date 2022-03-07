@@ -1,7 +1,7 @@
 /**
  * SPDX-License-Identifier: MIT
  *
- * Copyright (c) 2019 Chuck Wolber
+ * Copyright (c) 2022 Chuck Wolber
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -24,7 +24,7 @@
 
 #include <cmath>
 #include <vector>
-#include "Cube.h"
+#include "Cube.hpp"
 
 Cube::Cube() {
     this->cubeSize = DEFAULT_SIZE;
@@ -267,7 +267,14 @@ void Cube::turn(Turn t) {
 void Cube::rotateLayer(Layer layer, bool clockwise) {
     unsigned int subCubeSize, subLayerMax;
     unsigned int ulr, ulc, urr, urc, llr, llc, lrr, lrc;
-    Coordinate ul;
+
+    /**
+     * We have to set this to a throw-away value because -Ofast optimization
+     * causes an unassigned variable to emit -Werror=maybe-uninitialized. This
+     * warning cannot be squelched when using LLVM because of LLVM bug
+     * https://bugs.llvm.org/show_bug.cgi?id=24979
+     */
+    Coordinate ul = {Layer::U, true};
    
     getLayerUpperLeft(ul, layer);
     subLayerMax = (unsigned int)ceil((float)cubeSize/2);
@@ -423,7 +430,13 @@ void Cube::initializeLayers() {
 }
 
 void Cube::initializeLayer(Layer layer, CubieColor color) {
-    Coordinate ul;
+    /**
+     * We have to set this to a throw-away value because -Ofast optimization
+     * causes an unassigned variable to emit -Werror=maybe-uninitialized. This
+     * warning cannot be squelched when using LLVM because of LLVM bug
+     * https://bugs.llvm.org/show_bug.cgi?id=24979
+     */
+    Coordinate ul = {Layer::U, true};
     getLayerUpperLeft(ul, layer);
 
     for (unsigned int r = ul.row; r < (ul.row + cubeSize); r++)
@@ -448,169 +461,169 @@ void Cube::initializeEdges() {
 }
 
 void Cube::initializeFaceEdges() {
-    Coordinate ul, *c1, *c2, *c3, *c4;
+    Coordinate ul;
     getLayerUpperLeft(ul, Layer::F);
 
     for (unsigned int i=0; i<cubeSize; i++) {
-        c1 = new Coordinate;
-        c1->row = ul.row - 1;
-        c1->col = ul.col + i;
-        edges[i + Edges::UpFace*cubeSize] = *c1;
+        Coordinate c1;
+        c1.row = ul.row - 1;
+        c1.col = ul.col + i;
+        edges[i + Edges::UpFace*cubeSize] = c1;
 
-        c2 = new Coordinate;
-        c2->row = ul.row + i;
-        c2->col = ul.col + cubeSize;
-        edges[i + Edges::RightFace*cubeSize] = *c2;
+        Coordinate c2;
+        c2.row = ul.row + i;
+        c2.col = ul.col + cubeSize;
+        edges[i + Edges::RightFace*cubeSize] = c2;
 
-        c3 = new Coordinate;
-        c3->row = ul.row + cubeSize;
-        c3->col = ul.col + cubeSize - 1 - i;
-        edges[i + Edges::DownFace*cubeSize] = *c3;
+        Coordinate c3;
+        c3.row = ul.row + cubeSize;
+        c3.col = ul.col + cubeSize - 1 - i;
+        edges[i + Edges::DownFace*cubeSize] = c3;
 
-        c4 = new Coordinate;
-        c4->row = ul.row + cubeSize - 1 - i;
-        c4->col = ul.col - 1;
-        edges[i + Edges::LeftFace*cubeSize] = *c4;
+        Coordinate c4;
+        c4.row = ul.row + cubeSize - 1 - i;
+        c4.col = ul.col - 1;
+        edges[i + Edges::LeftFace*cubeSize] = c4;
     }
 }
 
 void Cube::initializeUpEdges() {
-    Coordinate ul, *c1, *c2, *c3, *c4;
+    Coordinate ul;
     getLayerUpperLeft(ul, Layer::U);
 
     for (unsigned int i=0; i<cubeSize; i++) {
-        c1 = new Coordinate;
-        c1->row = cubeSize;
-        c1->col = ul.col + cubeSize - 1 - i;
-        edges[i + Edges::FaceUp*cubeSize] = *c1;
+        Coordinate c1;
+        c1.row = cubeSize;
+        c1.col = ul.col + cubeSize - 1 - i;
+        edges[i + Edges::FaceUp*cubeSize] = c1;
 
-        c2 = new Coordinate;
-        c2->row = cubeSize;
-        c2->col = ul.col - 1 - i;
-        edges[i + Edges::LeftUp*cubeSize] = *c2;
+        Coordinate c2;
+        c2.row = cubeSize;
+        c2.col = ul.col - 1 - i;
+        edges[i + Edges::LeftUp*cubeSize] = c2;
 
-        c3 = new Coordinate;
-        c3->row = cubeSize;
-        c3->col = ul.col + cubeSize*3 - 1 - i;
-        edges[i + Edges::BackUp*cubeSize] = *c3;
+        Coordinate c3;
+        c3.row = cubeSize;
+        c3.col = ul.col + cubeSize*3 - 1 - i;
+        edges[i + Edges::BackUp*cubeSize] = c3;
 
-        c4 = new Coordinate;
-        c4->row = cubeSize;
-        c4->col = ul.col + cubeSize*2 - 1 - i;
-        edges[i + Edges::RightUp*cubeSize] = *c4;
+        Coordinate c4;
+        c4.row = cubeSize;
+        c4.col = ul.col + cubeSize*2 - 1 - i;
+        edges[i + Edges::RightUp*cubeSize] = c4;
     }
 }
 
 void Cube::initializeLeftEdges() {
-    Coordinate ul, *c1, *c2, *c3, *c4;
+    Coordinate ul;
     getLayerUpperLeft(ul, Layer::L);
 
     for (unsigned int i=0; i<cubeSize; i++) {
-        c1 = new Coordinate;
-        c1->row = i;
-        c1->col = cubeSize;
-        edges[i + Edges::UpLeft*cubeSize] = *c1;
+        Coordinate c1;
+        c1.row = i;
+        c1.col = cubeSize;
+        edges[i + Edges::UpLeft*cubeSize] = c1;
 
-        c2 = new Coordinate;
-        c2->row = ul.row + i;
-        c2->col = cubeSize;
-        edges[i + Edges::FaceLeft*cubeSize] = *c2;
+        Coordinate c2;
+        c2.row = ul.row + i;
+        c2.col = cubeSize;
+        edges[i + Edges::FaceLeft*cubeSize] = c2;
 
-        c3 = new Coordinate;
-        c3->row = ul.row + cubeSize + i;
-        c3->col = cubeSize;
-        edges[i + Edges::DownLeft*cubeSize] = *c3;
+        Coordinate c3;
+        c3.row = ul.row + cubeSize + i;
+        c3.col = cubeSize;
+        edges[i + Edges::DownLeft*cubeSize] = c3;
 
-        c4 = new Coordinate;
-        c4->row = ul.row + cubeSize - 1 - i;
-        c4->col = cubeSize*4 - 1;
-        edges[i + Edges::BackLeft*cubeSize] = *c4;
+        Coordinate c4;
+        c4.row = ul.row + cubeSize - 1 - i;
+        c4.col = cubeSize*4 - 1;
+        edges[i + Edges::BackLeft*cubeSize] = c4;
     }
 }
 
 void Cube::initializeRightEdges() {
-    Coordinate ul, *c1, *c2, *c3, *c4;
+    Coordinate ul;
     getLayerUpperLeft(ul, Layer::R);
 
     for (unsigned int i=0; i<cubeSize; i++) {
-        c1 = new Coordinate;
-        c1->row = ul.row - 1 - i;
-        c1->col = ul.col - 1;
-        edges[i + Edges::UpRight*cubeSize] = *c1;
+        Coordinate c1;
+        c1.row = ul.row - 1 - i;
+        c1.col = ul.col - 1;
+        edges[i + Edges::UpRight*cubeSize] = c1;
 
-        c2 = new Coordinate;
-        c2->row = ul.row + i;
-        c2->col = ul.col + cubeSize;
-        edges[i + Edges::BackRight*cubeSize] = *c2;
+        Coordinate c2;
+        c2.row = ul.row + i;
+        c2.col = ul.col + cubeSize;
+        edges[i + Edges::BackRight*cubeSize] = c2;
 
-        c3 = new Coordinate;
-        c3->row = ul.row + cubeSize*2 - 1 - i;
-        c3->col = ul.col - 1;
-        edges[i + Edges::DownRight*cubeSize] = *c3;
+        Coordinate c3;
+        c3.row = ul.row + cubeSize*2 - 1 - i;
+        c3.col = ul.col - 1;
+        edges[i + Edges::DownRight*cubeSize] = c3;
 
-        c4 = new Coordinate;
-        c4->row = ul.row + cubeSize - 1 - i;
-        c4->col = ul.col - 1;
-        edges[i + Edges::FaceRight*cubeSize] = *c4;
+        Coordinate c4;
+        c4.row = ul.row + cubeSize - 1 - i;
+        c4.col = ul.col - 1;
+        edges[i + Edges::FaceRight*cubeSize] = c4;
     }
 }
 
 void Cube::initializeDownEdges() {
-    Coordinate ul, *c1, *c2, *c3, *c4;
+    Coordinate ul;
     getLayerUpperLeft(ul, Layer::D);
 
     for (unsigned int i=0; i<cubeSize; i++) {
-        c1 = new Coordinate;
-        c1->row = ul.row - 1;
-        c1->col = ul.col + i;
-        edges[i + Edges::FaceDown*cubeSize] = *c1;
+        Coordinate c1;
+        c1.row = ul.row - 1;
+        c1.col = ul.col + i;
+        edges[i + Edges::FaceDown*cubeSize] = c1;
 
-        c2 = new Coordinate;
-        c2->row = ul.row - 1;
-        c2->col = ul.col + cubeSize + i;
-        edges[i + Edges::RightDown*cubeSize] = *c2;
+        Coordinate c2;
+        c2.row = ul.row - 1;
+        c2.col = ul.col + cubeSize + i;
+        edges[i + Edges::RightDown*cubeSize] = c2;
 
-        c3 = new Coordinate;
-        c3->row = ul.row - 1;
-        c3->col = ul.col + cubeSize*2 + i;
-        edges[i + Edges::BackDown*cubeSize] = *c3;
+        Coordinate c3;
+        c3.row = ul.row - 1;
+        c3.col = ul.col + cubeSize*2 + i;
+        edges[i + Edges::BackDown*cubeSize] = c3;
 
-        c4 = new Coordinate;
-        c4->row = ul.row - 1;
-        c4->col = i;
-        edges[i + Edges::LeftDown*cubeSize] = *c4;
+        Coordinate c4;
+        c4.row = ul.row - 1;
+        c4.col = i;
+        edges[i + Edges::LeftDown*cubeSize] = c4;
     }
 }
 
 void Cube::initializeBackEdges() {
-    Coordinate ul, *c1, *c2, *c3, *c4;
+    Coordinate ul;
     getLayerUpperLeft(ul, Layer::B);
 
     for (unsigned int i=0; i<cubeSize; i++) {
-        c1 = new Coordinate;
-        c1->row = 0;
-        c1->col = cubeSize*2 - 1 - i;
-        edges[i + Edges::UpBack*cubeSize] = *c1;
+        Coordinate c1;
+        c1.row = 0;
+        c1.col = cubeSize*2 - 1 - i;
+        edges[i + Edges::UpBack*cubeSize] = c1;
 
-        c2 = new Coordinate;
-        c2->row = cubeSize + i;
-        c2->col = 0;
-        edges[i + Edges::LeftBack*cubeSize] = *c2;
+        Coordinate c2;
+        c2.row = cubeSize + i;
+        c2.col = 0;
+        edges[i + Edges::LeftBack*cubeSize] = c2;
 
-        c3 = new Coordinate;
-        c3->row = cubeSize*3 - 1;
-        c3->col = cubeSize + i;
-        edges[i + Edges::DownBack*cubeSize] = *c3;
+        Coordinate c3;
+        c3.row = cubeSize*3 - 1;
+        c3.col = cubeSize + i;
+        edges[i + Edges::DownBack*cubeSize] = c3;
 
-        c4 = new Coordinate;
-        c4->row = ul.row + cubeSize - 1 - i;
-        c4->col = ul.col - 1;
-        edges[i + Edges::RightBack*cubeSize] = *c4;
+        Coordinate c4;
+        c4.row = ul.row + cubeSize - 1 - i;
+        c4.col = ul.col - 1;
+        edges[i + Edges::RightBack*cubeSize] = c4;
     }
 }
 
 void Cube::getLayerUpperLeft(Coordinate& coord, Layer l) {
-    /* Layers that are not (yet) supported. */
+    /* Layers that are not (yet?) supported. */
     if (l == Layer::M || l == Layer::E || l == Layer::S)
         return;
 
