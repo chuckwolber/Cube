@@ -1,7 +1,7 @@
 /**
  * SPDX-License-Identifier: MIT
  *
- * Copyright (c) 2019 Chuck Wolber
+ * Copyright (c) 2022 Chuck Wolber
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -31,11 +31,6 @@
  *    moves for cubes of size two (2x2x2) and three (3x3x3). Larger cubes can
  *    be rendered, but some cubie combinations cannot be achieved because
  *    multi-layer moves are unsupported.
- * 
- *    Patches are welcomed!
- * 
- * Bugs and Features:
- *    https://github.com/chuckwolber/Cube/issues
  * 
  * Glossary of Terms:
  *    * Cubie: One discrete sub-cube on the cube. Corner cubies have three
@@ -92,11 +87,11 @@
  *           DB -  8, 3  8, 4  8, 5; RB -  5, 8  4, 8  3, 8;
  */
 
-#ifndef CUBE_H
-#define CUBE_H
+#ifndef CUBE_HPP
+#define CUBE_HPP
 
 #include <vector>
-#include "Algorithm.h"
+#include "Algorithm.hpp"
 
 enum CubieColor : char {
     BLUE    = 'b', GREEN  = 'g',
@@ -204,4 +199,4 @@ class Cube {
         Coordinate rUpperLeft, rUpperLeftMax;
 };
 
-#endif // CUBE_H
+#endif // CUBE_HPP

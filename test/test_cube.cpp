@@ -25,8 +25,8 @@
 #include <cassert>
 #include <iostream>
 #include <vector>
-#include "../Algorithm.h"
-#include "../Cube.h"
+#include "../Algorithm.hpp"
+#include "../Cube.hpp"
 
 void test_constructors();
 void test_sized_constructors(unsigned int cubeSize);

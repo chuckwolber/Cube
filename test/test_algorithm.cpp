@@ -24,8 +24,8 @@
 
 #include <cassert>
 #include <iostream>
-#include "../Algorithm.h"
-#include "../Cube.h"
+#include "../Algorithm.hpp"
+#include "../Cube.hpp"
 
 void test_constructors();
 void test_inequalities();
@@ -35,7 +35,9 @@ void test_skip();
 void test_addTurn();
 void test_setAlgorithm();
 void test_inversions();
+void test_hidden_inversions();
 void test_triples();
+void test_hidden_triples();
 void test_string();
 
 void verify_turns(std::vector<Turn> results, std::vector<Turn> expected);
@@ -48,7 +50,9 @@ int main() {
     test_addTurn();
     test_setAlgorithm();
     test_inversions();
+    test_hidden_inversions();
     test_triples();
+    test_hidden_triples();
     test_string();
 
     return 0;
@@ -264,6 +268,69 @@ void test_inversions() {
     verify_turns(alg_2.getAlgorithm(), 
                     {{Layer::L, true}, {Layer::L, false}, {Layer::F, true}});
 
+    Algorithm alg_3({{Layer::F, true}, {Layer::F, false}}); 
+    assert(alg_3.hasInversion());
+
+    Algorithm alg_4({{Layer::F, false}, {Layer::F, true}}); 
+    assert(alg_4.hasInversion());
+
+    Algorithm alg_5({{Layer::B, true}, {Layer::B, false}}); 
+    assert(alg_5.hasInversion());
+
+    Algorithm alg_6({{Layer::B, false}, {Layer::B, true}}); 
+    assert(alg_6.hasInversion());
+
+    std::cout << "Passed" << std::endl;
+}
+
+void test_hidden_inversions() {
+    std::cout << "Testing hidden inversions... ";
+
+    Algorithm alg_1;
+    alg_1.addTurn({Layer::R, true});
+    alg_1.addTurn({Layer::F, true});
+    alg_1.addTurn({Layer::R, false});
+    assert(!alg_1.hasHiddenInversion());
+
+    Algorithm alg_2;
+    alg_2.addTurn({Layer::R, true});
+    alg_2.addTurn({Layer::L, true});
+    alg_2.addTurn({Layer::R, false});
+    assert(alg_2.hasHiddenInversion());
+
+    Algorithm alg_3;
+    alg_3.addTurn({Layer::R, true});
+    alg_3.addTurn({Layer::L, true});
+    alg_3.addTurn({Layer::L, true});
+    alg_3.addTurn({Layer::R, false});
+    assert(alg_3.hasHiddenInversion());
+
+    Algorithm alg_4;
+    alg_4.addTurn({Layer::R, true});
+    alg_4.addTurn({Layer::F, true});
+    alg_4.addTurn({Layer::R, false});
+    alg_4.addTurn({Layer::R, true});
+    alg_4.addTurn({Layer::L, true});
+    alg_4.addTurn({Layer::L, true});
+    alg_4.addTurn({Layer::R, false});
+    alg_4.addTurn({Layer::R, true});
+    alg_4.addTurn({Layer::F, true});
+    alg_4.addTurn({Layer::R, false});
+    assert(alg_4.hasHiddenInversion());
+
+    Algorithm alg_5;
+    alg_5.addTurn({Layer::R, true});
+    alg_5.addTurn({Layer::F, true});
+    alg_5.addTurn({Layer::R, false});
+    alg_5.addTurn({Layer::R, true});
+    alg_5.addTurn({Layer::L, true});
+    alg_5.addTurn({Layer::L, false});
+    alg_5.addTurn({Layer::R, false});
+    alg_5.addTurn({Layer::R, true});
+    alg_5.addTurn({Layer::F, true});
+    alg_5.addTurn({Layer::R, false});
+    assert(alg_5.hasHiddenInversion());
+
     std::cout << "Passed" << std::endl;
 }
 
@@ -310,6 +377,198 @@ void test_triples() {
     alg_3.addTurn({Layer::U, false});
     alg_3.addTurn({Layer::B, true});
     assert(alg_3.hasTriple());
+
+    std::cout << "Passed" << std::endl;
+}
+
+void test_hidden_triples() {
+    std::cout << "Testing hidden triples... ";
+    
+    Algorithm alg_1;
+    alg_1.addTurn({Layer::B, false});
+    alg_1.addTurn({Layer::F, true});
+    alg_1.addTurn({Layer::B, true});
+    alg_1.addTurn({Layer::B, true});
+    assert(!alg_1.hasHiddenTriple());
+
+    Algorithm alg_2;
+    alg_2.addTurn({Layer::B, true});
+    alg_2.addTurn({Layer::F, true});
+    alg_2.addTurn({Layer::B, true});
+    alg_2.addTurn({Layer::B, true});
+    assert(alg_2.hasHiddenTriple());
+
+    Algorithm alg_3;
+    alg_3.addTurn({Layer::B, true});
+    alg_3.addTurn({Layer::F, true});
+    alg_3.addTurn({Layer::F, true});
+    alg_3.addTurn({Layer::B, true});
+    alg_3.addTurn({Layer::B, true});
+    assert(alg_3.hasHiddenTriple());
+
+    Algorithm alg_4;
+    alg_4.addTurn({Layer::B, true});
+    alg_4.addTurn({Layer::F, true});
+    alg_4.addTurn({Layer::B, true});
+    alg_4.addTurn({Layer::F, true});
+    alg_4.addTurn({Layer::B, true});
+    assert(alg_4.hasHiddenTriple());
+
+    /* 0:1 - X X (Y | Y') X */
+    Algorithm alg_5;
+    alg_5.addTurn({Layer::U, true});
+    alg_5.addTurn({Layer::L, true});
+    alg_5.addTurn({Layer::L, true});
+    alg_5.addTurn({Layer::R, false});
+    alg_5.addTurn({Layer::L, true});
+    assert(alg_5.hasHiddenTriple());
+
+    Algorithm alg_6;
+    alg_6.addTurn({Layer::U, true});
+    alg_6.addTurn({Layer::L, true});
+    alg_6.addTurn({Layer::R, true});
+    alg_6.addTurn({Layer::R, false});
+    alg_6.addTurn({Layer::L, true});
+    assert(!alg_6.hasHiddenTriple());
+
+    /* 1:0 - X (Y | Y') X X */
+    Algorithm alg_7;
+    alg_7.addTurn({Layer::U, true});
+    alg_7.addTurn({Layer::R, true});
+    alg_7.addTurn({Layer::L, true});
+    alg_7.addTurn({Layer::R, true});
+    alg_7.addTurn({Layer::R, true});
+    assert(alg_7.hasHiddenTriple());
+
+    Algorithm alg_8;
+    alg_8.addTurn({Layer::U, true});
+    alg_8.addTurn({Layer::R, true});
+    alg_8.addTurn({Layer::L, true});
+    alg_8.addTurn({Layer::R, false});
+    alg_8.addTurn({Layer::R, true});
+    assert(!alg_8.hasHiddenTriple());
+
+    /* 0:2 - X X (Y | Y') (Y | Y') X */
+    Algorithm alg_9;
+    alg_9.addTurn({Layer::U, true});
+    alg_9.addTurn({Layer::R, true});
+    alg_9.addTurn({Layer::R, true});
+    alg_9.addTurn({Layer::L, true});
+    alg_9.addTurn({Layer::L, false});
+    alg_9.addTurn({Layer::R, true});
+    assert(alg_9.hasHiddenTriple());
+
+    Algorithm alg_10;
+    alg_10.addTurn({Layer::U, true});
+    alg_10.addTurn({Layer::R, true});
+    alg_10.addTurn({Layer::R, true});
+    alg_10.addTurn({Layer::L, true});
+    alg_10.addTurn({Layer::L, false});
+    alg_10.addTurn({Layer::R, false});
+    assert(!alg_10.hasHiddenTriple());
+
+    /* 1:1 - X (Y | Y') X (Y | Y') X */
+    Algorithm alg_11;
+    alg_11.addTurn({Layer::U, true});
+    alg_11.addTurn({Layer::R, true});
+    alg_11.addTurn({Layer::L, true});
+    alg_11.addTurn({Layer::R, true});
+    alg_11.addTurn({Layer::L, false});
+    alg_11.addTurn({Layer::R, true});
+    assert(alg_11.hasHiddenTriple());
+
+    Algorithm alg_12;
+    alg_12.addTurn({Layer::U, true});
+    alg_12.addTurn({Layer::R, true});
+    alg_12.addTurn({Layer::L, true});
+    alg_12.addTurn({Layer::R, true});
+    alg_12.addTurn({Layer::L, false});
+    alg_12.addTurn({Layer::R, false});
+    assert(!alg_12.hasHiddenTriple());
+
+    /* 2:0 - X (Y | Y') (Y | Y') X X */
+    Algorithm alg_13;
+    alg_13.addTurn({Layer::U, true});
+    alg_13.addTurn({Layer::R, false});
+    alg_13.addTurn({Layer::L, false});
+    alg_13.addTurn({Layer::L, true});
+    alg_13.addTurn({Layer::R, false});
+    alg_13.addTurn({Layer::R, false});
+    assert(alg_13.hasHiddenTriple());
+
+    Algorithm alg_14;
+    alg_14.addTurn({Layer::U, true});
+    alg_14.addTurn({Layer::R, true});
+    alg_14.addTurn({Layer::L, true});
+    alg_14.addTurn({Layer::L, true});
+    alg_14.addTurn({Layer::R, false});
+    alg_14.addTurn({Layer::R, false});
+    assert(!alg_14.hasHiddenTriple());
+
+    /* 1:2 - X (Y | Y') X (Y | Y') (Y | Y') X */
+    Algorithm alg_15;
+    alg_15.addTurn({Layer::F, true});
+    alg_15.addTurn({Layer::D, false});
+    alg_15.addTurn({Layer::U, false});
+    alg_15.addTurn({Layer::D, false});
+    alg_15.addTurn({Layer::U, false});
+    alg_15.addTurn({Layer::U, true});
+    alg_15.addTurn({Layer::D, false});
+    assert(alg_15.hasHiddenTriple());
+
+    Algorithm alg_16;
+    alg_16.addTurn({Layer::F, true});
+    alg_16.addTurn({Layer::D, true});
+    alg_16.addTurn({Layer::U, true});
+    alg_16.addTurn({Layer::D, true});
+    alg_16.addTurn({Layer::R, false});
+    alg_16.addTurn({Layer::U, false});
+    alg_16.addTurn({Layer::D, true});
+    assert(!alg_16.hasHiddenTriple());
+
+    /* 2:1 - X (Y | Y') (Y | Y') X (Y | Y') X */
+    Algorithm alg_17;
+    alg_17.addTurn({Layer::F, true});
+    alg_17.addTurn({Layer::D, false});
+    alg_17.addTurn({Layer::U, false});
+    alg_17.addTurn({Layer::U, false});
+    alg_17.addTurn({Layer::D, false});
+    alg_17.addTurn({Layer::U, true});
+    alg_17.addTurn({Layer::D, false});
+    assert(alg_17.hasHiddenTriple());
+
+    Algorithm alg_18;
+    alg_18.addTurn({Layer::L, true});
+    alg_18.addTurn({Layer::D, true});
+    alg_18.addTurn({Layer::U, true});
+    alg_18.addTurn({Layer::U, true});
+    alg_18.addTurn({Layer::D, true});
+    alg_18.addTurn({Layer::L, false});
+    alg_18.addTurn({Layer::D, true});
+    assert(!alg_18.hasHiddenTriple());
+
+    /* 2:2 - X (Y | Y') (Y | Y') X (Y | Y') (Y | Y') X */
+    Algorithm alg_19;
+    alg_19.addTurn({Layer::U, true});
+    alg_19.addTurn({Layer::F, false});
+    alg_19.addTurn({Layer::B, false});
+    alg_19.addTurn({Layer::B, true});
+    alg_19.addTurn({Layer::F, false});
+    alg_19.addTurn({Layer::B, true});
+    alg_19.addTurn({Layer::B, false});
+    alg_19.addTurn({Layer::F, false});
+    assert(alg_19.hasHiddenTriple());
+
+    Algorithm alg_20;
+    alg_20.addTurn({Layer::R, true});
+    alg_20.addTurn({Layer::F, true});
+    alg_20.addTurn({Layer::B, false});
+    alg_20.addTurn({Layer::B, false});
+    alg_20.addTurn({Layer::F, true});
+    alg_20.addTurn({Layer::L, false});
+    alg_20.addTurn({Layer::B, true});
+    alg_20.addTurn({Layer::F, true});
+    assert(!alg_20.hasHiddenTriple());
 
     std::cout << "Passed" << std::endl;
 }
